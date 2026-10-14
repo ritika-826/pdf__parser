@@ -17,15 +17,14 @@ def test_chunk_and_store_and_retrieve(temp_vector_store):
         chunk_overlap=20
     )
 
-    assert doc_info.document_id == doc_id
-    assert doc_info.chunk_count >= 2
-    assert doc_info.page_count == 2
+    assert doc_info["document_id"] == doc_id
+    assert doc_info["chunk_count"] >= 2
+    assert doc_info["page_count"] == 2
 
-    # Query matching page 2 content
     results = temp_vector_store.similarity_search("ChromaDB embedding database", document_id=doc_id, top_k=2)
     assert len(results) > 0
-    assert any("ChromaDB" in r.text for r in results)
-    assert results[0].page in [1, 2]
+    assert any("ChromaDB" in r["text"] for r in results)
+    assert results[0]["page"] in [1, 2]
 
 def test_document_scoping_prevents_leakage(temp_vector_store):
     # Store Doc 1
@@ -47,8 +46,8 @@ def test_document_scoping_prevents_leakage(temp_vector_store):
     # Search for Apollo in doc_2 (should return 0 results)
     results = temp_vector_store.similarity_search("Apollo secret code", document_id="doc_2")
     for r in results:
-        assert "998811" not in r.text
-        assert "Apollo" not in r.text
+        assert "998811" not in r["text"]
+        assert "Apollo" not in r["text"]
 
 def test_delete_document(temp_vector_store):
     temp_vector_store.chunk_and_store(
@@ -62,7 +61,6 @@ def test_delete_document(temp_vector_store):
     deleted = temp_vector_store.delete_document("doc_to_delete")
     assert deleted is True
 
-    # Check that it no longer exists
     assert temp_vector_store.get_document("doc_to_delete") is None
     results = temp_vector_store.similarity_search("Temporary content", document_id="doc_to_delete")
     assert len(results) == 0

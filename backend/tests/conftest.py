@@ -4,9 +4,7 @@ import pytest
 from pypdf import PdfWriter
 from fastapi.testclient import TestClient
 
-from app.config import settings
-from app.services.embedding_service import embedding_service
-from app.services.vector_store import VectorStoreService
+from app.vector_store import embedding_service, VectorStoreService
 from app.main import app
 
 def create_sample_pdf_bytes(pages_text: List[str]) -> bytes:
@@ -63,7 +61,6 @@ class MockEmbeddings:
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         results = []
         for text in texts:
-            # Deterministic 384-dim vector based on char codes (matching all-MiniLM-L6-v2)
             vec = [0.0] * 384
             for i, ch in enumerate(text[:384]):
                 vec[i] = round((ord(ch) % 10) / 10.0, 3)
@@ -85,10 +82,9 @@ def mock_embeddings(monkeypatch):
 def temp_vector_store(tmp_path, monkeypatch, mock_embeddings):
     """Provide a fresh VectorStoreService pointing to a temporary directory."""
     test_store = VectorStoreService(persist_directory=str(tmp_path / "test_chroma"))
-    monkeypatch.setattr("app.services.vector_store.vector_store_service", test_store)
-    monkeypatch.setattr("app.routes.documents.vector_store_service", test_store)
-    monkeypatch.setattr("app.routes.upload.vector_store_service", test_store)
-    monkeypatch.setattr("app.services.rag_service.vector_store_service", test_store)
+    monkeypatch.setattr("app.vector_store.vector_store_service", test_store)
+    monkeypatch.setattr("app.main.vector_store_service", test_store)
+    monkeypatch.setattr("app.rag_service.vector_store_service", test_store)
     return test_store
 
 @pytest.fixture

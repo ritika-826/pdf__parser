@@ -1,8 +1,7 @@
-import pytest
 from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
 from tests.conftest import create_text_pdf_bytes
-from app.services.rag_service import rag_service
+from app.rag_service import rag_service
 
 def test_health_endpoint(client, monkeypatch):
     monkeypatch.setattr(rag_service, "is_ollama_available", lambda: (True, ["llama3:latest"]))

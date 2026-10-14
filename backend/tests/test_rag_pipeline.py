@@ -1,7 +1,7 @@
 import pytest
 from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
-from app.services.rag_service import rag_service
+from app.rag_service import rag_service
 
 def test_rag_pipeline_grounded_answer(monkeypatch, temp_vector_store):
     doc_id = "doc_rag_test"
@@ -14,10 +14,8 @@ def test_rag_pipeline_grounded_answer(monkeypatch, temp_vector_store):
         ]
     )
 
-    # Mock Ollama availability
     monkeypatch.setattr(rag_service, "is_ollama_available", lambda: (True, ["llama3:latest"]))
 
-    # Mock ChatOllama invoke
     mock_response = AIMessage(content="Jupiter is the largest planet in the solar system, with a diameter of roughly 142,984 km [Page 1].")
     monkeypatch.setattr(ChatOllama, "invoke", lambda self, messages: mock_response)
 
@@ -27,11 +25,11 @@ def test_rag_pipeline_grounded_answer(monkeypatch, temp_vector_store):
         session_id="session_test_1"
     )
 
-    assert "Jupiter" in res.answer
-    assert "142,984" in res.answer
-    assert res.document_id == doc_id
-    assert len(res.sources) > 0
-    assert res.sources[0].page == 1
+    assert "Jupiter" in res["answer"]
+    assert "142,984" in res["answer"]
+    assert res["document_id"] == doc_id
+    assert len(res["sources"]) > 0
+    assert res["sources"][0]["page"] == 1
 
 def test_rag_pipeline_answer_absent_from_document(monkeypatch, temp_vector_store):
     doc_id = "doc_gardening"
@@ -46,7 +44,6 @@ def test_rag_pipeline_answer_absent_from_document(monkeypatch, temp_vector_store
 
     monkeypatch.setattr(rag_service, "is_ollama_available", lambda: (True, ["llama3:latest"]))
 
-    # Model properly returning the strict fallback phrase when answer is absent
     absent_phrase = "The uploaded document does not provide enough information to answer this question."
     monkeypatch.setattr(ChatOllama, "invoke", lambda self, messages: AIMessage(content=absent_phrase))
 
@@ -56,7 +53,7 @@ def test_rag_pipeline_answer_absent_from_document(monkeypatch, temp_vector_store
         session_id="session_test_2"
     )
 
-    assert res.answer == absent_phrase
+    assert res["answer"] == absent_phrase
 
 def test_session_history_isolation(monkeypatch, temp_vector_store):
     doc_id = "doc_multi_session"
@@ -70,16 +67,13 @@ def test_session_history_isolation(monkeypatch, temp_vector_store):
     monkeypatch.setattr(rag_service, "is_ollama_available", lambda: (True, ["llama3:latest"]))
     monkeypatch.setattr(ChatOllama, "invoke", lambda self, messages: AIMessage(content="Python is high-level."))
 
-    # Session A
     rag_service.answer_question(document_id=doc_id, question="What is Python?", session_id="session_A")
     history_A = rag_service.get_history(session_id="session_A", document_id=doc_id)
-    assert len(history_A) == 2  # user + assistant
+    assert len(history_A) == 2
 
-    # Session B (should be empty initially)
     history_B = rag_service.get_history(session_id="session_B", document_id=doc_id)
     assert len(history_B) == 0
 
-    # Clear Session A
     rag_service.clear_session_history("session_A")
     history_A_after = rag_service.get_history(session_id="session_A", document_id=doc_id)
     assert len(history_A_after) == 0

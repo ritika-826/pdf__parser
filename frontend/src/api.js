@@ -6,7 +6,6 @@ export async function checkHealth() {
     if (!res.ok) throw new Error(`Health check failed: ${res.statusText}`);
     return await res.json();
   } catch (error) {
-    console.error('Health check error:', error);
     return {
       status: 'error',
       ollama_connected: false,
@@ -28,12 +27,9 @@ export async function uploadPdf(file) {
   });
 
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
-    const errorMsg = data.detail || `Upload failed with status ${res.status}`;
-    throw new Error(errorMsg);
+    throw new Error(data.detail || `Upload failed with status ${res.status}`);
   }
-
   return data;
 }
 
@@ -47,27 +43,20 @@ export async function askQuestion(documentId, question, sessionId = 'default', t
 
   const res = await fetch(`${API_BASE_URL}/ask`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
-    const errorMsg = data.detail || `Question answering failed with status ${res.status}`;
-    throw new Error(errorMsg);
+    throw new Error(data.detail || `Question answering failed with status ${res.status}`);
   }
-
   return data;
 }
 
 export async function getDocuments() {
   const res = await fetch(`${API_BASE_URL}/documents`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch documents: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(`Failed to fetch documents: ${res.statusText}`);
   return await res.json();
 }
 
@@ -76,9 +65,7 @@ export async function deleteDocument(documentId) {
     method: 'DELETE',
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.detail || `Failed to delete document: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(data.detail || `Failed to delete document: ${res.statusText}`);
   return data;
 }
 
@@ -87,8 +74,6 @@ export async function clearChat(sessionId = 'default') {
     method: 'DELETE',
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.detail || `Failed to clear chat: ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(data.detail || `Failed to clear chat: ${res.statusText}`);
   return data;
 }

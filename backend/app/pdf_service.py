@@ -1,55 +1,50 @@
 import io
+import os
 from typing import List, Dict, Any
 import pdfplumber
-from app.config import settings
 
 class PDFProcessingError(Exception):
     """Base exception for PDF processing errors."""
     pass
 
 class PDFSizeExceededError(PDFProcessingError):
-    """Raised when the uploaded PDF exceeds the configured size limit."""
     pass
 
 class PDFInvalidFormatError(PDFProcessingError):
-    """Raised when the file does not have a valid PDF header or extension."""
     pass
 
 class PDFEncryptedError(PDFProcessingError):
-    """Raised when the PDF is password-protected or encrypted."""
     pass
 
 class PDFCorruptedError(PDFProcessingError):
-    """Raised when the PDF file is corrupted or unreadable."""
     pass
 
 class PDFEmptyError(PDFProcessingError):
-    """Raised when the PDF has no pages or contains no extractable text (e.g. scanned)."""
     pass
 
 class PDFService:
     @staticmethod
-    def validate_file(filename: str, file_size: int, file_bytes: bytes) -> None:
-        """Validate filename, size, and magic bytes."""
+    def validate_file(filename: str, file_size: int, file_bytes: bytes, max_mb: int = 20) -> None:
+        """Validate filename, size, and PDF magic bytes."""
         if not filename.lower().endswith(".pdf"):
             raise PDFInvalidFormatError("Only PDF (.pdf) files are supported.")
         
-        max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
+        max_bytes = max_mb * 1024 * 1024
         if file_size > max_bytes:
             raise PDFSizeExceededError(
-                f"File size ({file_size / (1024 * 1024):.1f} MB) exceeds maximum allowed limit of {settings.MAX_FILE_SIZE_MB} MB."
+                f"File size ({file_size / (1024 * 1024):.1f} MB) exceeds maximum allowed limit of {max_mb} MB."
             )
         
         if not file_bytes.startswith(b"%PDF"):
             raise PDFInvalidFormatError("Invalid PDF header. File is not a valid PDF document.")
 
     @staticmethod
-    def extract_text_per_page(file_bytes: bytes, filename: str) -> List[Dict[str, Any]]:
+    def extract_text_per_page(file_bytes: bytes, filename: str, max_mb: int = 20) -> List[Dict[str, Any]]:
         """
         Extract text from PDF on a per-page basis using PDFPlumber.
         Preserves page numbers and detects scanned/empty documents.
         """
-        PDFService.validate_file(filename, len(file_bytes), file_bytes)
+        PDFService.validate_file(filename, len(file_bytes), file_bytes, max_mb=max_mb)
 
         pages_data: List[Dict[str, Any]] = []
         total_text_chars = 0
@@ -63,8 +58,7 @@ class PDFService:
                     page_number = idx + 1
                     try:
                         extracted = page.extract_text()
-                    except Exception as pe:
-                        # Handle page-level read errors
+                    except Exception:
                         extracted = None
 
                     text = (extracted or "").strip()

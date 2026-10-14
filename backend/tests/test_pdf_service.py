@@ -1,5 +1,5 @@
 import pytest
-from app.services.pdf_service import (
+from app.pdf_service import (
     PDFService,
     PDFSizeExceededError,
     PDFInvalidFormatError,

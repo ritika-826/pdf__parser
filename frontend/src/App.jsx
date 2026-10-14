@@ -21,7 +21,7 @@ import {
   getDocuments,
   deleteDocument,
   clearChat
-} from './services/api';
+} from './api';
 
 export default function App() {
   const [documents, setDocuments] = useState([]);
