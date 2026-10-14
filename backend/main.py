@@ -294,7 +294,7 @@ def answer_rag(doc_id: str, question: str, session_id: str = "default", top_k: i
             messages.append(AIMessage(content=msg["content"]))
     messages.append(HumanMessage(content=question))
 
-    active_model = OLLAMA_MODEL
+    active_model = os.getenv("OLLAMA_MODEL", OLLAMA_MODEL)
     if models and active_model not in models:
         for m in models:
             if m.split(":")[0] == active_model.split(":")[0]:
@@ -303,8 +303,25 @@ def answer_rag(doc_id: str, question: str, session_id: str = "default", top_k: i
         else:
             active_model = models[0]
 
-    llm = ChatOllama(base_url=OLLAMA_BASE_URL, model=active_model, temperature=0.0)
-    answer = llm.invoke(messages).content.strip()
+    try:
+        llm = ChatOllama(base_url=OLLAMA_BASE_URL, model=active_model, temperature=0.0)
+        answer = llm.invoke(messages).content.strip()
+    except Exception as e:
+        err_msg = str(e)
+        logger.error(f"Inference error with model {active_model}: {err_msg}")
+        if "requires more system memory" in err_msg.lower() or "memory" in err_msg.lower() or "status code: 500" in err_msg.lower():
+            fallback_model = "smollm:latest" if "smollm:latest" in models and active_model != "smollm:latest" else None
+            if fallback_model:
+                logger.info(f"Retrying with lightweight model: {fallback_model}")
+                try:
+                    llm_fb = ChatOllama(base_url=OLLAMA_BASE_URL, model=fallback_model, temperature=0.0)
+                    answer = llm_fb.invoke(messages).content.strip()
+                except Exception as fb_err:
+                    answer = f"System Memory Warning: Both {active_model} and {fallback_model} exceeded available RAM. Please free up system memory."
+            else:
+                answer = f"System Memory Warning: Model '{active_model}' requires more memory than is currently available on your system. Please close background applications."
+        else:
+            raise
 
     if hist_key not in chat_history:
         chat_history[hist_key] = []

@@ -67,7 +67,7 @@ ollama pull llama3:latest
 ### 2. Start the Backend
 In a new PowerShell terminal:
 ```powershell
-cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\backend
+cd C:\Users\ACER\Desktop\pdf_parser\backend
 .\.venv\Scripts\Activate.ps1
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
@@ -77,7 +77,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ### 3. Start the Frontend
 In another PowerShell terminal:
 ```powershell
-cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\frontend
+cd C:\Users\ACER\Desktop\pdf_parser\frontend
 npm run dev
 ```
 - Open in browser: `http://localhost:5173`
@@ -88,7 +88,7 @@ npm run dev
 
 Run the automated test suite (offline with mocked embeddings):
 ```powershell
-cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\backend
+cd C:\Users\ACER\Desktop\pdf_parser\backend
 .\.venv\Scripts\Activate.ps1
 pytest test_app.py -v
 ```
