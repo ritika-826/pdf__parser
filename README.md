@@ -1,57 +1,29 @@
 # PDF_Parser — AI-Powered PDF Question Answering System (RAG)
 
-An AI-powered, retrieval-augmented generation (RAG) web application that enables users to upload PDF documents, extract text per page with PDFPlumber, split text into semantically preserved chunks, generate vector embeddings using Hugging Face Sentence Transformers, store and index chunks in ChromaDB, and ask natural-language questions grounded strictly in document context using a local Ollama LLM.
+An ultra-simple, modern, AI-powered Retrieval-Augmented Generation (RAG) web application that enables users to upload PDF documents, extract text with PDFPlumber, split text into chunks, generate embeddings via Hugging Face Sentence Transformers, store chunks in ChromaDB, and ask natural-language questions grounded strictly in document context using a local Ollama LLM.
 
 ---
 
-## 🏗️ Simplified Architecture Overview
+## 🌟 Ultra-Simple Project Architecture
 
-```mermaid
-graph LR
-    User["👤 User"] <-->|"Browser UI"| React["🖥️ React Frontend\n(Upload & Chat)"]
-    React <-->|"REST API"| FastAPI["⚙️ FastAPI Backend\n(main.py)"]
-    FastAPI <-->|"Extract Text"| PDFPlumber["📄 PDFPlumber\n(pdf_service.py)"]
-    FastAPI <-->|"Store & Query Chunks"| Chroma["🗄️ ChromaDB + Embeddings\n(vector_store.py)"]
-    FastAPI <-->|"Prompt & Answer"| Ollama["🦙 Ollama Local LLM\n(rag_service.py)"]
-```
-
-### The 2 Core Workflows:
-1. **Upload & Ingestion:**
-   `PDF Upload` ➔ `PDFPlumber extracts pages` ➔ `Recursive character chunking` ➔ `Sentence Transformers vectorization` ➔ `Indexed in ChromaDB`.
-2. **Grounded Question Answering:**
-   `Question` ➔ `Similarity Search in ChromaDB (filtered by document_id)` ➔ `Retrieved context + prompt` ➔ `Ollama LLM (Llama 3)` ➔ `Grounded answer with page citations`.
-
----
-
-## 📁 Simple Project Structure
+The entire codebase has been consolidated into **just 2 main files** (one for backend, one for frontend), making it effortless to understand, run, and modify:
 
 ```text
 pdf_parser/
-├── frontend/                     # React web application
+├── backend/
+│   ├── main.py            # Complete backend in ONE clean file (FastAPI + PDFPlumber + ChromaDB + Ollama)
+│   ├── test_app.py        # Automated test suite in ONE file
+│   ├── requirements.txt   # Backend dependencies
+│   └── .env               # Configuration (Ollama URL, model name)
+│
+├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── FileUpload.jsx    # Drag-and-drop PDF upload
-│   │   │   ├── DocumentStatus.jsx# 6-stage pipeline progress tracker
-│   │   │   ├── ChatWindow.jsx    # Conversational QA interface
-│   │   │   ├── ChatMessage.jsx   # Formatted response with copy button
-│   │   │   └── SourceReferences.jsx # Retrieved chunk viewer with page badges
-│   │   ├── App.jsx               # Main screen layout and document library
-│   │   ├── api.js                # Clean API service layer
-│   │   ├── main.jsx              # Application entry point
-│   │   └── styles.css            # Modern responsive stylesheet
+│   │   ├── App.jsx        # Complete interactive UI in ONE file (Upload + Pipeline Status + Chat + Citations)
+│   │   ├── main.jsx       # Mounts App
+│   │   └── styles.css     # Clean responsive styling
 │   ├── index.html
 │   ├── vite.config.js
 │   └── package.json
-│
-├── backend/                      # Python FastAPI backend
-│   ├── app/
-│   │   ├── pdf_service.py        # PDF extraction & scanned PDF validation
-│   │   ├── vector_store.py       # ChromaDB vector storage & HuggingFace embeddings
-│   │   ├── rag_service.py        # LangChain & Ollama RAG coordination
-│   │   └── main.py               # REST API endpoints & schemas
-│   ├── tests/                    # Automated pytest suite (19 unit/integration tests)
-│   ├── requirements.txt
-│   └── .env                      # Configurable settings
 │
 ├── .gitignore
 └── README.md
@@ -59,55 +31,65 @@ pdf_parser/
 
 ---
 
-## 🚀 Quick Start Guide
+## 🔄 How the 2 Core Workflows Work
 
-### Step 1: Ensure Ollama is Running
+```mermaid
+flowchart LR
+    subgraph INGESTION["1. Upload & Ingestion"]
+        PDF["📄 PDF Upload"] --> PLUMBER["PDFPlumber (Extracts Text)"]
+        PLUMBER --> CHUNKER["Recursive Text Splitter"]
+        CHUNKER --> HF["Sentence Transformers (Embeddings)"]
+        HF --> CHROMA["ChromaDB (Local Vector Store)"]
+    end
+
+    subgraph QUERY["2. Grounded Question Answering"]
+        QUESTION["❓ User Question"] --> SEARCH["ChromaDB (Find Top-4 Chunks)"]
+        SEARCH --> PROMPT["Context Prompt Construction"]
+        PROMPT --> OLLAMA["Ollama LLM (Llama 3)"]
+        OLLAMA --> ANSWER["💬 Grounded Answer + Page Citations"]
+    end
+```
+
+---
+
+## 🚀 How to Run
+
+### 1. Ensure Ollama is Running
 In PowerShell:
 ```powershell
 ollama serve
 ```
-Make sure you have pulled a local model (e.g. Llama 3):
+Make sure you have pulled a local model:
 ```powershell
 ollama pull llama3:latest
 ```
 
-### Step 2: Start the FastAPI Backend
-Open a new PowerShell terminal:
+### 2. Start the Backend
+In a new PowerShell terminal:
 ```powershell
 cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\backend
 .\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 - API Base URL: `http://127.0.0.1:8000`
-- Interactive Swagger UI: `http://127.0.0.1:8000/docs`
+- Interactive Swagger Docs: `http://127.0.0.1:8000/docs`
 
-### Step 3: Start the React Frontend
-Open another PowerShell terminal:
+### 3. Start the Frontend
+In another PowerShell terminal:
 ```powershell
 cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\frontend
 npm run dev
 ```
-- Open browser at: `http://localhost:5173`
+- Open in browser: `http://localhost:5173`
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Testing
 
-To run the full test suite (mocked embeddings & LLM, completely offline):
+Run the automated test suite (offline with mocked embeddings):
 ```powershell
 cd c:\Users\ACER\OneDrive\Documents\Desktop\pdf_parser\backend
 .\.venv\Scripts\Activate.ps1
-pytest -v
+pytest test_app.py -v
 ```
-All 19 tests will execute and pass in ~2 seconds.
-
----
-
-## 📋 REST API Endpoints
-
-- `GET /health` — Check backend health and Ollama model status.
-- `POST /upload-pdf` — Upload PDF and trigger extraction, chunking, and ChromaDB vector indexing.
-- `POST /ask` — Ask question and receive grounded answer with source page numbers.
-- `GET /documents` — List all documents in the vector database.
-- `DELETE /documents/{document_id}` — Delete a document and its ChromaDB vectors.
-- `DELETE /chat/{session_id}` — Clear conversation history for a session.
+All tests pass in ~2 seconds.
